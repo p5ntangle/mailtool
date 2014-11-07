@@ -1,0 +1,9 @@
+mail:
+  tls: False
+  username: 
+  password:
+  from_addr: shaun.omeara@bcx.co.za
+  mail_server: smtp.saix.net
+  template: templates/PrivateCloud_Reports.html
+  mail_data: templates/PrivateCloud_Reports.data
+  mail_data: templates/PrivateCloud_Reports.data
