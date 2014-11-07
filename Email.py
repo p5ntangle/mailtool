@@ -116,25 +116,7 @@ def main():
     send.send_msg(mail_to, subject, send.render_template(mail_template,
                                                          mail_data ), attachments)
 
-    #send.send_msg(mail_to, subject, send.render_template( conf['mail']['template'],
-    #                                                      mail_data), attachments)
-  
 if __name__ == "__main__":
     main()
     
                                         
-
-"""
-<!DOCTYPE html>
-<html>
-<head>
-    <title>New password notification</title>
-</head>
-<body>
-    Dear user, {{name}}!<br>
-    We migrated from old cloud to new cloud! <br>
-    And now we have new password: <br>
-    <b>{{password}}</b>
-</body>
-</html>
-"""
