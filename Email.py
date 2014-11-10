@@ -88,7 +88,9 @@ def help_parser():
                         help='mail subject line')
     parser.add_argument('--msg', type=str, nargs='?',
                         help='message body')
-    parser.add_argument('--msg_data', type=str, nargs='?',
+    parser.add_argument('--msg_data', type=str, nargs='*',
+                        help='data for message template, key=value pairs passed at the command line')
+    parser.add_argument('--msg_data_file', type=str, nargs='?',
                         help='data for message template, this can be set in the config yaml')
     parser.add_argument('--msg_template', type=str, nargs='?',
                         help='message template location, this can be set in the config yaml')
@@ -106,15 +108,22 @@ def main():
     conf = yaml.load(open('mail.yaml',"r")) if not cli['config'] else yaml.load(open(cli['config'],"r"))
 
     attachments = None if not cli['attachments'] else cli['attachments']
-    mail_data_file = conf['mail']['mail_data'] if not cli['msg_data'] else cli['msg_data']
-    mail_data = yaml.load(open(mail_data_file,"r"))
+    if cli['msg_data_file']:
+        mail_data_file = conf['mail']['mail_data'] if not cli['msg_data'] else cli['msg_data']
+        mail_data = yaml.load(open(mail_data_file,"r"))
+    else:
+         mail_data = {}
+         for each in cli['msg_data']:
+             k, v = each.split("=")
+             mail_data[k] = v
+         print mail_data
     mail_template = conf['mail']['template'] if not cli['msg_template'] else cli['msg_template']
     subject = cli['subject']
     mail_to = cli['to']
 
     send=Send(conf=conf)
     send.send_msg(mail_to, subject, send.render_template(mail_template,
-                                                         mail_data ), attachments)
+                                                        mail_data ), attachments)
 
 if __name__ == "__main__":
     main()
