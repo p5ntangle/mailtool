@@ -122,8 +122,11 @@ def main():
     mail_to = cli['to']
 
     send=Send(conf=conf)
-    send.send_msg(mail_to, subject, send.render_template(mail_template,
-                                                        mail_data ), attachments)
+    if mail_template and mail_data:
+        send.send_msg(mail_to, subject, send.render_template(mail_template,
+                                                            mail_data ), attachments)
+    else:
+        send.send_msg(mail_to, subject, cli['msg'], attachments)
 
 if __name__ == "__main__":
     main()
