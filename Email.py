@@ -111,7 +111,7 @@ def main():
     if cli['msg_data_file']:
         mail_data_file = conf['mail']['mail_data'] if not cli['msg_data'] else cli['msg_data']
         mail_data = yaml.load(open(mail_data_file,"r"))
-    else:
+    elif cli['msg_data']:
          mail_data = {}
          for each in cli['msg_data']:
              k, v = each.split("=")
