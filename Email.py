@@ -27,12 +27,18 @@ class Postman:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.server.quit()
 
-    def send(self, to, subject, msg, attach=None):
+    def send(self, to, subject, msg, attach=None, bcc=None):
         msg_mime = MIMEMultipart('mixed')
         msg_mime.attach(MIMEText(msg, 'html'))
         msg_mime['Subject'] = subject
         msg_mime['From'] = self.from_addr
-        msg_mime['To'] = to
+        if bcc:
+            msg_mime['Bcc'] = bcc
+            msg_mime['To'] = to
+            mail_to = [to, bcc]
+        else:
+            msg_mime['To'] = to
+            mail_to = to
         if attach:
             for fn in attach:
                 file = MIMEBase('application',"octet-stream")
@@ -40,7 +46,7 @@ class Postman:
                 Encoders.encode_base64(file)
                 file.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(fn))
                 msg_mime.attach(file)
-        self.server.sendmail(self.from_addr, to, msg_mime.as_string())
+        self.server.sendmail(self.from_addr, mail_to, msg_mime.as_string())
 
     def close(self):
         self.server.quit()
@@ -68,10 +74,10 @@ class Send():
                        use_tls=self.tls)
         self.templater = Templater()
     
-    def send_msg(self, to, subject, msg, attach=None):
+    def send_msg(self, to, subject, msg, attach=None, bcc=None):
         if self.postman:
             with self.postman as p:
-                p.send(to, subject, msg, attach)
+                p.send(to, subject, msg, attach, bcc)
 
     def render_template(self, name_file, args):
         if self.templater:
@@ -81,11 +87,14 @@ class Send():
 
 
 def help_parser():
+    #TODO Impliment multiple email address and CC/BCC Handling
     parser = argparse.ArgumentParser(description='Send template based email with attachments.')
     parser.add_argument('--to', type=str, nargs='?', required=True,
                         help='destination email address')
     parser.add_argument('--subject', type=str, nargs='?', required=True,
                         help='mail subject line')
+    parser.add_argument('--bcc', type=str, nargs='?',
+                        help='bcc destination email address')
     parser.add_argument('--msg', type=str, nargs='?',
                         help='message body')
     parser.add_argument('--msg_data', type=str, nargs='*',
@@ -112,21 +121,27 @@ def main():
         mail_data_file = conf['mail']['mail_data'] if not cli['msg_data'] else cli['msg_data']
         mail_data = yaml.load(open(mail_data_file,"r"))
     elif cli['msg_data']:
-         mail_data = {}
-         for each in cli['msg_data']:
-             k, v = each.split("=")
-             mail_data[k] = v
-         print mail_data
+        mail_data = {}
+        for each in cli['msg_data']:
+            k, v = each.split("=")
+            mail_data[k] = v
+        print mail_data
+    else:
+        mail_data_file = conf['mail']['mail_data']
+        mail_data = yaml.load(open(mail_data_file,"r"))
+
     mail_template = conf['mail']['template'] if not cli['msg_template'] else cli['msg_template']
     subject = cli['subject']
     mail_to = cli['to']
+    bcc = None if not cli['bcc'] else cli['bcc']
 
     send=Send(conf=conf)
+    print "Sending mail to: %s, bcc: %s" % (mail_to, bcc)
     if mail_template and mail_data:
         send.send_msg(mail_to, subject, send.render_template(mail_template,
-                                                            mail_data ), attachments)
+                                                            mail_data ), attachments, bcc)
     else:
-        send.send_msg(mail_to, subject, cli['msg'], attachments)
+        send.send_msg(mail_to, subject, cli['msg'], attachments, bcc)
 
 if __name__ == "__main__":
     main()
